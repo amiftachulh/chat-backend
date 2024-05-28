@@ -5,10 +5,15 @@ import { User } from "../models/user.model";
 export const users = new Hono()
   .use(authenticate)
   .get("/", async (c) => {
-    const name = c.req.query("name");
+    const q = c.req.query("q");
     const users = await User
-      .find({ name })
-      .select("_id name email")
+      .find({
+        $and: [
+          { name: { $regex: q, $options: "i" } },
+          { _id: { $ne: c.get("user")._id } }
+        ]
+      })
+      .select("_id name displayName email")
       .sort({ name: 1 })
       .limit(5)
       .lean();
